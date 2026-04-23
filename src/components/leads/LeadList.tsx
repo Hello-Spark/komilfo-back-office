@@ -14,6 +14,10 @@ import {
   type LeadColumn as LeadColumnId,
 } from "./status";
 import { useLeadsRealtime } from "@/hooks/useLeadsRealtime";
+import {
+  filterLeadsByMagasins,
+  useMagasinFilter,
+} from "@/context/MagasinFilterContext";
 import type { LeadFull } from "@/lib/supabase/types";
 
 type Filter = "all" | LeadColumnId;
@@ -24,8 +28,13 @@ interface Props {
 }
 
 export default function LeadList({ initialLeads, isAdmin }: Props) {
-  const { leads, activityCounts, error, updateStatus, logEvent, assign } =
+  const { leads: rawLeads, activityCounts, error, updateStatus, logEvent, assign } =
     useLeadsRealtime(initialLeads);
+  const { selectedIds, userMagasins } = useMagasinFilter();
+  const leads = useMemo(
+    () => filterLeadsByMagasins(rawLeads, selectedIds, userMagasins),
+    [rawLeads, selectedIds, userMagasins],
+  );
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange>({

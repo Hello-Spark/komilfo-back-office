@@ -32,6 +32,7 @@ type InboundPayload = {
   email?: string;
   tel?: string;
   code_postal?: string;
+  code_insee?: string;
   ville?: string;
   message?: string;
   optin?: boolean;
@@ -94,6 +95,7 @@ const CRENEAU_MAP: Record<string, LeadCreneau> = {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const CP_RE = /^[0-9]{5}$/;
+const INSEE_RE = /^[0-9A-Z]{5}$/;
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_STRING_LENGTH = 255;
 
@@ -231,6 +233,8 @@ Deno.serve(async (req) => {
   const email = emailRaw ? emailRaw.toLowerCase() : null;
   const tel = clampString(payload.tel);
   const codePostal = clampString(payload.code_postal);
+  const codeInseeRaw = clampString(payload.code_insee);
+  const codeInsee = codeInseeRaw ? codeInseeRaw.toUpperCase() : null;
   const ville = clampString(payload.ville);
   const optinText = clampString(payload.optin_text, 1000);
 
@@ -240,6 +244,7 @@ Deno.serve(async (req) => {
   if (!email) missing.push('email');
   if (!tel) missing.push('tel');
   if (!codePostal) missing.push('code_postal');
+  if (!codeInsee) missing.push('code_insee');
   if (!ville) missing.push('ville');
   if (!optinText) missing.push('optin_text');
   if (missing.length > 0) {
@@ -251,6 +256,9 @@ Deno.serve(async (req) => {
   }
   if (!CP_RE.test(codePostal!)) {
     return json({ error: 'invalid_code_postal' }, 400, origin);
+  }
+  if (!INSEE_RE.test(codeInsee!)) {
+    return json({ error: 'invalid_code_insee' }, 400, origin);
   }
 
   const type: LeadType = mapEnum(TYPE_MAP, payload.type) ?? 'devis';
@@ -282,6 +290,7 @@ Deno.serve(async (req) => {
       email,
       tel,
       code_postal: codePostal,
+      code_insee: codeInsee,
       ville,
       echeance,
       travaux,
@@ -304,8 +313,14 @@ Deno.serve(async (req) => {
 
   if (leadError || !leadInserted) {
     console.error('lead insert error', leadError);
-    // Cas attendu géré explicitement : code postal non routable (trigger de routage).
-    if (leadError?.message?.toLowerCase().includes('code postal inconnu')) {
+    // Cas attendus gérés explicitement : le trigger `resolve_lead_magasin`
+    // lève une exception si le code INSEE est inconnu.
+    const msg = leadError?.message?.toLowerCase() ?? '';
+    if (msg.includes('code insee inconnu')) {
+      return json({ error: 'unknown_code_insee' }, 422, origin);
+    }
+    if (msg.includes('code postal inconnu')) {
+      // Compat avec l'ancien trigger CP si le rollback n'a pas été fait.
       return json({ error: 'unknown_code_postal' }, 422, origin);
     }
     return json({ error: 'lead_insert_failed' }, 500, origin);

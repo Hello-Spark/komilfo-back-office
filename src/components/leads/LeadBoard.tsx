@@ -10,6 +10,10 @@ import {
   type LeadColumn as LeadColumnId,
 } from "./status";
 import { useLeadsRealtime } from "@/hooks/useLeadsRealtime";
+import {
+  filterLeadsByMagasins,
+  useMagasinFilter,
+} from "@/context/MagasinFilterContext";
 import type { LeadFull } from "@/lib/supabase/types";
 
 interface Props {
@@ -18,8 +22,13 @@ interface Props {
 }
 
 export default function LeadBoard({ initialLeads, isAdmin }: Props) {
-  const { leads, activityCounts, error, updateStatus, logEvent, assign } =
+  const { leads: rawLeads, activityCounts, error, updateStatus, logEvent, assign } =
     useLeadsRealtime(initialLeads);
+  const { selectedIds, userMagasins } = useMagasinFilter();
+  const leads = useMemo(
+    () => filterLeadsByMagasins(rawLeads, selectedIds, userMagasins),
+    [rawLeads, selectedIds, userMagasins],
+  );
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selected = useMemo(

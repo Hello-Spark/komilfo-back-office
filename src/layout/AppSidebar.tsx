@@ -10,6 +10,7 @@ import {
   HorizontaLDots,
   ListIcon,
 } from "../icons/index";
+import MagasinFilterSelector from "./MagasinFilterSelector";
 
 type NavItem = {
   name: string;
@@ -66,7 +67,7 @@ const AppSidebar: React.FC = () => {
           )}
         </Link>
       </div>
-      <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
+      <div className="flex flex-1 flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
         <nav className="mb-6">
           <h2
             className={`mb-4 text-xs uppercase flex leading-[20px] text-gray-400 ${
@@ -109,6 +110,7 @@ const AppSidebar: React.FC = () => {
             ))}
           </ul>
         </nav>
+        <MagasinFilterSelector />
       </div>
     </aside>
   );

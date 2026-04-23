@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import MfaChallengeForm from "@/components/auth/MfaChallengeForm";
 
 export const metadata: Metadata = {
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function MfaPage() {
-  return <MfaChallengeForm />;
+  return (
+    <Suspense fallback={null}>
+      <MfaChallengeForm />
+    </Suspense>
+  );
 }

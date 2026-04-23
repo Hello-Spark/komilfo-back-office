@@ -27,20 +27,26 @@ export default function CrmDashboard() {
 
   const isAdmin = profile.role === "admin";
 
-  // Indicateur visible quand un sous-ensemble est actif (pour éviter la
-  // confusion « mes chiffres ne correspondent pas » après changement de
-  // filtre).
-  const filterBanner = isFiltering ? (
-    <div className="col-span-12 rounded-lg border border-dashed border-amber-300 bg-amber-50 px-4 py-2 text-sm text-amber-800 dark:border-amber-800/60 dark:bg-amber-500/10 dark:text-amber-200">
-      Les statistiques ci-dessous sont filtrées sur{" "}
-      <strong>{selectedIds.length}</strong> magasin
-      {selectedIds.length > 1 ? "s" : ""} sur {userMagasins.length}.
+  // Indicateur discret — simple pill inline pour rappeler que le filtre
+  // est actif sans prendre de place ni détourner le regard des chiffres.
+  const filterHint = isFiltering ? (
+    <div className="col-span-12 -mb-2 flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+        <path
+          d="M1.5 2.5h9l-3.5 4.5v3l-2 1v-4l-3.5-4.5z"
+          stroke="currentColor"
+          strokeWidth="1.2"
+          strokeLinejoin="round"
+        />
+      </svg>
+      Filtré · {selectedIds.length}/{userMagasins.length} magasin
+      {userMagasins.length > 1 ? "s" : ""}
     </div>
   ) : null;
 
   return (
     <div className="grid grid-cols-12 gap-4 md:gap-6">
-      {filterBanner}
+      {filterHint}
 
       <div className="col-span-12">
         <CrmMetrics stats={stats} />

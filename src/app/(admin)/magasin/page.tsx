@@ -183,11 +183,7 @@ export default function MagasinPage() {
         </div>
       </div>
 
-      <MagasinInfos
-        magasin={magasin}
-        canEdit={canEdit}
-        onUpdated={(m) => setMagasin(m)}
-      />
+      <MagasinInfos magasin={magasin} />
 
       <MagasinEmails
         magasinId={magasin.id}

@@ -39,8 +39,12 @@ export async function POST(request: Request) {
     // Var d'env SUPABASE_SERVICE_ROLE_KEY manquante en prod → on loggue
     // explicitement et on rend une erreur propre (le client affiche un
     // message neutre, ne bloque pas le signup).
+    const msg = err instanceof Error ? err.message : String(err);
     console.error('[preview-magasin] admin client init failed', err);
-    return NextResponse.json({ error: 'server_misconfigured' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'server_misconfigured', detail: msg },
+      { status: 500 },
+    );
   }
 
   const { data, error } = await admin
@@ -49,8 +53,16 @@ export async function POST(request: Request) {
     .eq('email', email);
 
   if (error) {
-    console.error('[preview-magasin] query failed', error);
-    return NextResponse.json({ error: 'query_failed' }, { status: 500 });
+    console.error('[preview-magasin] query failed', { email, error });
+    return NextResponse.json(
+      {
+        error: 'query_failed',
+        detail: error.message,
+        code: error.code ?? null,
+        hint: error.hint ?? null,
+      },
+      { status: 500 },
+    );
   }
 
   // Dedup (même magasin peut apparaître plusieurs fois si listé sous plusieurs rôles)

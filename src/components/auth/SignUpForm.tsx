@@ -69,7 +69,8 @@ export default function SignUpForm() {
           clearTimeout(timeoutId);
           if (cancelled) return;
           if (!res.ok) {
-            console.warn("[preview-magasin] HTTP", res.status);
+            const detail = await res.json().catch(() => null);
+            console.warn("[preview-magasin] HTTP", res.status, detail);
             setLookup({ email: normalizedEmail, matched: "error" });
             return;
           }

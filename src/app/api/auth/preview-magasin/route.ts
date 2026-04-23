@@ -32,7 +32,17 @@ export async function POST(request: Request) {
 
   const email = (body.email as string).trim().toLowerCase();
 
-  const admin = createAdminClient();
+  let admin;
+  try {
+    admin = createAdminClient();
+  } catch (err) {
+    // Var d'env SUPABASE_SERVICE_ROLE_KEY manquante en prod → on loggue
+    // explicitement et on rend une erreur propre (le client affiche un
+    // message neutre, ne bloque pas le signup).
+    console.error('[preview-magasin] admin client init failed', err);
+    return NextResponse.json({ error: 'server_misconfigured' }, { status: 500 });
+  }
+
   const { data, error } = await admin
     .from('magasin_emails')
     .select('magasin:magasins(name, ville, groupe)')

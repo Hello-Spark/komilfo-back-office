@@ -6,20 +6,22 @@ import { EyeCloseIcon, EyeIcon } from "@/icons";
 import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type MagasinPreview = { name: string; ville: string | null; groupe: string | null };
 type PreviewState =
   | { status: "idle" }
   | { status: "checking" }
   | { status: "matched"; magasins: MagasinPreview[] }
-  | { status: "unmatched" };
+  | { status: "unmatched" }
+  | { status: "unavailable" };
 
-type LookupResult = {
-  email: string;
-  matched: boolean;
-  magasins: MagasinPreview[];
-};
+type LookupResult =
+  | { email: string; matched: true; magasins: MagasinPreview[] }
+  | { email: string; matched: false; magasins: [] }
+  | { email: string; matched: "error" };
+
+const LOOKUP_TIMEOUT_MS = 5000;
 
 function looksLikeEmail(value: string) {
   const trimmed = value.trim();
@@ -47,53 +49,72 @@ export default function SignUpForm() {
   const normalizedEmail = email.trim().toLowerCase();
   const emailReady = looksLikeEmail(email);
 
-  // Debounced lookup : seuls les résultats async atterrissent dans le state.
+  // Debounced lookup + timeout de sécurité : le spinner ne doit jamais rester
+  // bloqué si l'API traîne ou plante (var d'env manquante en prod, 500, etc.).
   useEffect(() => {
     if (!emailReady) return;
-    const controller = new AbortController();
-    const timer = setTimeout(async () => {
-      try {
-        const res = await fetch("/api/auth/preview-magasin", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: normalizedEmail }),
-          signal: controller.signal,
+    const abort = new AbortController();
+    let cancelled = false; // true si le cleanup a tourné (email changé / unmount)
+
+    const debounce = setTimeout(() => {
+      const timeoutId = setTimeout(() => abort.abort(), LOOKUP_TIMEOUT_MS);
+
+      fetch("/api/auth/preview-magasin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: normalizedEmail }),
+        signal: abort.signal,
+      })
+        .then(async (res) => {
+          clearTimeout(timeoutId);
+          if (cancelled) return;
+          if (!res.ok) {
+            console.warn("[preview-magasin] HTTP", res.status);
+            setLookup({ email: normalizedEmail, matched: "error" });
+            return;
+          }
+          const json = (await res.json()) as {
+            matched: boolean;
+            magasins: MagasinPreview[];
+          };
+          if (cancelled) return;
+          setLookup(
+            json.matched
+              ? { email: normalizedEmail, matched: true, magasins: json.magasins }
+              : { email: normalizedEmail, matched: false, magasins: [] },
+          );
+        })
+        .catch((err: Error) => {
+          clearTimeout(timeoutId);
+          if (cancelled) return; // abort venu du cleanup : nouveau rendu prendra le relais
+          // abort venu du timeout OU vraie erreur réseau → on sort du spinner
+          console.warn(
+            "[preview-magasin]",
+            err.name === "AbortError" ? `timeout ${LOOKUP_TIMEOUT_MS}ms` : err,
+          );
+          setLookup({ email: normalizedEmail, matched: "error" });
         });
-        if (controller.signal.aborted) return;
-        if (!res.ok) return;
-        const json = (await res.json()) as {
-          matched: boolean;
-          magasins: MagasinPreview[];
-        };
-        if (controller.signal.aborted) return;
-        setLookup({
-          email: normalizedEmail,
-          matched: json.matched,
-          magasins: json.magasins,
-        });
-      } catch (err) {
-        if ((err as Error).name !== "AbortError") {
-          // Silencieux : on laisse l'UI sur "checking" plutôt que d'afficher
-          // une erreur pour un check non bloquant.
-        }
-      }
     }, 400);
 
     return () => {
-      clearTimeout(timer);
-      controller.abort();
+      cancelled = true;
+      clearTimeout(debounce);
+      abort.abort();
     };
   }, [normalizedEmail, emailReady]);
 
   // État du feedback dérivé : idle si email invalide, checking tant que le
-  // résultat ne correspond pas à l'email courant, sinon matched/unmatched.
+  // résultat ne correspond pas à l'email courant, sinon matched/unmatched/
+  // unavailable selon le résultat async.
   const preview: PreviewState = !emailReady
     ? { status: "idle" }
     : !lookup || lookup.email !== normalizedEmail
       ? { status: "checking" }
-      : lookup.matched
-        ? { status: "matched", magasins: lookup.magasins }
-        : { status: "unmatched" };
+      : lookup.matched === "error"
+        ? { status: "unavailable" }
+        : lookup.matched
+          ? { status: "matched", magasins: lookup.magasins }
+          : { status: "unmatched" };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,6 +346,18 @@ function MagasinPreviewCard({ state }: { state: PreviewState }) {
           Votre compte sera rattaché automatiquement après confirmation.
         </p>
       </div>
+    );
+  }
+
+  if (state.status === "unavailable") {
+    // Vérif impossible (timeout, erreur réseau, API down). On ne bloque pas
+    // le signup — juste un message discret pour que l'utilisateur ne reste
+    // pas bloqué devant un spinner.
+    return (
+      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+        Vérification du rattachement magasin indisponible. Vous pouvez
+        continuer : un administrateur complétera votre rattachement si besoin.
+      </p>
     );
   }
 

@@ -1,11 +1,11 @@
 import React from "react";
 import Badge from "../ui/badge/Badge";
 import { ArrowDownIcon, ArrowUpIcon, BoxIconLine, GroupIcon } from "@/icons";
-import { getLeadStatsByStatus } from "@/lib/supabase/queries";
 import type { LeadStatus } from "@/lib/supabase/types";
+import type { LeadStatsRow } from "@/hooks/useDashboardData";
 
 function sumFor(
-  stats: Awaited<ReturnType<typeof getLeadStatsByStatus>>,
+  stats: LeadStatsRow[],
   statuses: LeadStatus[],
   key: "total" | "last_7d" | "last_30d"
 ): number {
@@ -22,8 +22,11 @@ function delta(current: number, previous: number): { pct: number; up: boolean } 
   return { pct: Math.abs(Math.round(pct * 10) / 10), up: current >= previous };
 }
 
-export default async function CrmMetrics() {
-  const stats = await getLeadStatsByStatus();
+interface Props {
+  stats: LeadStatsRow[];
+}
+
+export default function CrmMetrics({ stats }: Props) {
 
   const active = sumFor(stats, ["new", "assigned", "contacted"], "total");
   const wonAll = sumFor(stats, ["won"], "total");

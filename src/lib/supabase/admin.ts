@@ -9,7 +9,7 @@ export function createAdminClient() {
 
   if (!url || !serviceKey) {
     throw new Error(
-      'SUPABASE_SERVICE_ROLE_KEY is required for admin operations. Add it to .env.local.',
+      'SUPABASE_SERVICE_ROLE_KEY missing. Set it in .env.local (dev) or in the hosting env vars (prod: Coolify → Environment Variables).',
     );
   }
 

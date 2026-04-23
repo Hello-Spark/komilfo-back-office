@@ -9,6 +9,7 @@ import {
   GridIcon,
   HorizontaLDots,
   ListIcon,
+  BoxIcon,
 } from "../icons/index";
 import MagasinFilterSelector from "./MagasinFilterSelector";
 
@@ -22,6 +23,7 @@ const navItems: NavItem[] = [
   { icon: <GridIcon />, name: "Dashboard", path: "/" },
   { icon: <BoxCubeIcon />, name: "Kanban", path: "/kanban" },
   { icon: <ListIcon />, name: "Liste", path: "/list" },
+  { icon: <BoxIcon />, name: "Mon magasin", path: "/magasin" },
 ];
 
 const AppSidebar: React.FC = () => {

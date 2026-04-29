@@ -46,6 +46,12 @@ type InboundPayload = {
   campaign?: string;
   location_host?: string;
   location_href?: string;
+  // Trackers Google Ads. Le formulaire Webflow doit lire les query params
+  // ?gclid= / ?gbraid= / ?wbraid= au premier chargement et les persister
+  // (cookie 1st party, durée 90 jours pour le gclid) avant de les renvoyer ici.
+  gclid?: string;
+  gbraid?: string;
+  wbraid?: string;
 };
 
 const TYPE_MAP: Record<string, LeadType> = {
@@ -306,6 +312,9 @@ Deno.serve(async (req) => {
       location_href: clampString(payload.location_href, 2000),
       user_agent: clampString(req.headers.get('user-agent'), 500),
       ip_address: ip,
+      gclid: clampString(payload.gclid, 512),
+      gbraid: clampString(payload.gbraid, 512),
+      wbraid: clampString(payload.wbraid, 512),
       metadata: { source: 'webflow_lp' },
     })
     .select('id, magasin_id')

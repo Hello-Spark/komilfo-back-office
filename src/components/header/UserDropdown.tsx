@@ -158,6 +158,33 @@ export default function UserDropdown() {
               </DropdownItem>
             </li>
           )}
+          {profile?.role === "admin" && (
+            <li>
+              <DropdownItem
+                onItemClick={closeDropdown}
+                tag="a"
+                href="/parametres/google-ads"
+                className="flex items-center gap-3 px-3 py-2 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+              >
+                <svg
+                  className="fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300"
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25Zm0 1.5a8.21 8.21 0 0 1 5.46 2.07l-2.6 2.6a4.5 4.5 0 0 0-5.86.06l-2.6-2.6A8.2 8.2 0 0 1 12 3.75Zm-6.42 3.13 2.6 2.6a4.5 4.5 0 0 0-.06 5.86l-2.6 2.6A8.21 8.21 0 0 1 3.75 12c0-2.05.76-3.93 2.01-5.36 .067-.082.07-.085 0 .24Zm6.42 9.37a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9Zm0-7.5a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm6.42-2.13A8.2 8.2 0 0 1 20.25 12a8.2 8.2 0 0 1-2.13 5.46l-2.6-2.6a4.5 4.5 0 0 0 .06-5.86l2.6-2.6.16.18Zm-1.06 12a8.2 8.2 0 0 1-5.36 2.01 8.21 8.21 0 0 1-5.46-2.07l2.6-2.6a4.5 4.5 0 0 0 5.86-.06l2.6 2.6-.24.12Z"
+                    fill=""
+                  />
+                </svg>
+                Conversions Google Ads
+              </DropdownItem>
+            </li>
+          )}
         </ul>
         <form action="/auth/signout" method="post" className="mt-3">
           <button

@@ -189,6 +189,23 @@ export function useLeadsRealtime(initialLeads: LeadFull[]): UseLeadsRealtime {
       if (note && note.trim()) {
         await logActivity(leadId, "note", "Note ajoutée", note.trim());
       }
+
+      // Conversion offline Google Ads : fire-and-forget. La route gère le
+      // skip si la config est désactivée ou incomplète, et logge tout dans
+      // google_ads_conversion_logs pour debug. Une erreur ici ne doit pas
+      // perturber l'UI : on l'écrit silencieusement en console.
+      if (newStatus === "won") {
+        fetch(`/api/admin/leads/${leadId}/google-ads-conversion`, {
+          method: "POST",
+        })
+          .then(async (res) => {
+            if (!res.ok) {
+              const body = await res.json().catch(() => ({}));
+              console.warn("[google-ads] upload failed", body);
+            }
+          })
+          .catch((e) => console.warn("[google-ads] upload error", e));
+      }
     },
     [supabase, logActivity]
   );

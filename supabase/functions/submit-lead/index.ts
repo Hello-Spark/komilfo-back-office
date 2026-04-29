@@ -114,7 +114,7 @@ function corsHeaders(origin: string | null): HeadersInit {
   return {
     'Access-Control-Allow-Origin': isAllowed ? origin : allowed[0] ?? '',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey',
     'Access-Control-Max-Age': '86400',
     Vary: 'Origin',
   };
